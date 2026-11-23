@@ -1,0 +1,15 @@
+node_modules/
+dist/
+
+# Notas de trabajo (no son parte de la página)
+replica/
+
+# Originales grandes: la página usa las versiones optimizadas de assets/web y public/img
+assets/google-play-es.png
+assets/icono.png
+assets/logo-eggodia.png
+assets/mazo-cartas.jpg
+assets/partida-eggodia.jpg
+assets/rey-huevo.png
+assets/selector-huevos.jpg
+assets/tienda-*.jpg

@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Descarga del juego Eggodia</title>
+  <meta name="description" content="Eggodia: batalla de cartas por turnos. Arma tu mazo, viste a tu Rey Huevo y rompe el huevo rival. Descárgalo gratis en Google Play.">
+  <meta name="theme-color" content="#0D2A6B">
+  <meta property="og:title" content="Eggodia">
+  <meta property="og:description" content="Batalla de cartas por turnos: arma tu mazo y rompe el huevo rival.">
+  <meta property="og:image" content="assets/fondo-eggodia.jpg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/web/icono-32.png">
+  <link rel="apple-touch-icon" href="assets/web/icono-180.png">
+  <style>
+    /* Fuentes servidas desde el propio sitio (antes venían de Google Fonts y bloqueaban la carga) */
+    @font-face {
+      font-family: "Fredoka";
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url("assets/fuentes/fredoka-latin.woff2") format("woff2");
+    }
+    @font-face {
+      font-family: "Almendra";
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+      src: url("assets/fuentes/almendra-700-latin.woff2") format("woff2");
+    }
+    :root {
+      --azul: #0D2A6B;
+      --azul-noche: #071739;
+      --azul-medio: #10285E;
+      --tinta: #14182B;
+      --tinta-suave: #4A5068;
+      --papel: #F3EFE6;
+      --amarillo: #FFD21F;
+      --naranja: #FF7A1A;
+      --naranja-titulo: #D2560A;   /* naranja más oscuro para títulos sobre fondo claro (contraste 3.6:1) */
+      --naranja-texto: #B84A08;    /* para texto chico sobre fondo claro (contraste 4.6:1) */
+      --cian: #3FD3F0;
+      --bisel: #0E0F13;
+      --sangrado: 8vw;          /* cuánto se sale el celular por el borde */
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+    body {
+      background: var(--papel);
+      color: var(--tinta);
+      font-family: "Fredoka", system-ui, sans-serif;
+      font-weight: 400;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    img, video { display: block; max-width: 100%; }
+    h1 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+    /* ---------- Banner ---------- */
+    .banner {
+      position: relative;
+      height: clamp(260px, 42vw, 620px);
+      background: var(--azul-noche);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      isolation: isolate;
+    }
+    .banner__fondo {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 40%;
+    }
+    .banner::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 45% 50% at 50% 45%, rgba(7, 23, 57, .45), rgba(7, 23, 57, 0) 70%),
+        linear-gradient(180deg, rgba(7, 23, 57, 0) 70%, rgba(7, 23, 57, .35) 100%);
+    }
+    .banner__logo {
+      width: clamp(240px, 44vw, 640px);
+      height: auto;
+      filter: drop-shadow(0 10px 26px rgba(0, 0, 0, .55));
+      animation: aparecer-logo .9s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    /* ---------- Viñetas: celular + texto ---------- */
+    .vineta { position: relative; overflow: hidden; }
+    .vineta--clara { background: var(--papel); color: var(--tinta); }
+    .vineta--oscura {
+      background:
+        radial-gradient(ellipse 60% 80% at 80% 50%, rgba(63, 211, 240, .12), rgba(63, 211, 240, 0) 70%),
+        linear-gradient(180deg, var(--azul-medio), var(--azul-noche));
+      color: #fff;
+    }
+    .vineta__interior {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(32px, 5vw, 80px);
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: clamp(56px, 7vw, 110px) clamp(16px, 6vw, 120px) clamp(56px, 7vw, 110px) 0;
+    }
+    .vineta--invertida .vineta__interior {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      padding: clamp(56px, 7vw, 110px) 0 clamp(56px, 7vw, 110px) clamp(16px, 6vw, 120px);
+    }
+    .vineta--invertida .celular-zona { order: 2; }
+
+    /* El celular acostado */
+    .celular-zona { position: relative; min-width: 0; isolation: isolate; }
+    .celular {
+      position: relative;
+      width: calc(100% + var(--sangrado));
+      margin-left: calc(var(--sangrado) * -1);
+      aspect-ratio: 2.17 / 1;
+      background: var(--bisel);
+      border-radius: clamp(28px, 4vw, 64px);
+      padding: clamp(10px, 1.3vw, 20px);
+      box-shadow:
+        inset 0 0 0 2px #2A2C33,
+        inset 0 0 0 5px #000,
+        0 30px 60px -20px rgba(7, 12, 30, .6),
+        0 12px 24px -12px rgba(7, 12, 30, .45);
+    }
+    .vineta--invertida .celular { margin-left: 0; margin-right: calc(var(--sangrado) * -1); }
+    .vineta--oscura .celular {
+      box-shadow:
+        inset 0 0 0 2px #3A3D47,
+        inset 0 0 0 5px #000,
+        0 0 0 1px rgba(255, 255, 255, .06),
+        0 30px 70px -20px rgba(0, 0, 0, .8),
+        0 0 80px -10px rgba(63, 211, 240, .25);
+    }
+    .celular::before {
+      content: "";
+      position: absolute;
+      top: -4px;
+      right: 22%;
+      width: 12%;
+      height: 5px;
+      border-radius: 4px 4px 0 0;
+      background: #24262C;
+    }
+    .vineta--invertida .celular::before { right: auto; left: 22%; }
+    .celular__pantalla {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: clamp(18px, 2.8vw, 46px);
+      overflow: hidden;
+      background: #000;
+    }
+    .celular__pantalla video,
+    .celular__pantalla > img,
+    .diapositiva img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .celular__camara {
+      position: absolute;
+      right: clamp(14px, 1.8vw, 28px);
+      top: 50%;
+      width: clamp(8px, .9vw, 13px);
+      aspect-ratio: 1;
+      transform: translateY(-50%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #3B4A6B, #0A0B0F 60%);
+      z-index: 2;
+    }
+    .vineta--invertida .celular__camara { right: auto; left: clamp(14px, 1.8vw, 28px); }
+    .celular__brillo {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(115deg, rgba(255, 255, 255, .10) 0%, rgba(255, 255, 255, 0) 35%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Pase de diapositivas (tienda) */
+    .diapositiva {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity .7s ease;
+    }
+    .diapositiva.activa { opacity: 1; }
+    .pestanas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 22px;
+      padding-left: calc(var(--sangrado) * .2);
+    }
+    .vineta--invertida .pestanas { justify-content: flex-end; }
+    .pestana {
+      font: 600 .8rem/1 "Fredoka", sans-serif;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 9px 14px;
+      border-radius: 999px;
+      border: 2px solid rgba(20, 24, 43, .15);
+      background: transparent;
+      color: var(--tinta-suave);
+      cursor: pointer;
+      transition: background .2s, color .2s, border-color .2s;
+    }
+    .pestana:hover { border-color: var(--tinta); color: var(--tinta); }
+    .pestana[aria-selected="true"] { background: var(--tinta); border-color: var(--tinta); color: var(--amarillo); }
+    .pestana:focus-visible { outline: 3px solid var(--naranja); outline-offset: 2px; }
+
+    /* Rey Huevo asomándose (primera viñeta) */
+    /* Espacio arriba del celular para que la corona del huevo no quede cortada por el borde de la sección */
+    .celular-zona:has(.rey) { margin-top: calc(1vw + 10px); }
+    .rey {
+      position: absolute;
+      right: 6%;
+      top: 0;
+      width: clamp(58px, 7vw, 110px);
+      height: auto;
+      transform: translateY(-62%);
+      z-index: -1;
+      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, .25));
+    }
+
+    /* Texto de cada viñeta */
+    .texto { min-width: 0; }
+    .etiqueta {
+      display: inline-block;
+      font: 600 .78rem/1 "Fredoka", sans-serif;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--naranja-texto);
+      margin-bottom: 14px;
+    }
+    .vineta--oscura .etiqueta { color: var(--cian); }
+    .lema {
+      font-family: "Almendra", Georgia, serif;
+      font-weight: 700;
+      font-size: clamp(1.9rem, 3.3vw, 3.2rem);
+      line-height: 1.02;
+      text-transform: uppercase;
+      letter-spacing: .005em;
+      text-wrap: balance;
+    }
+    .lema span { color: var(--naranja-titulo); }
+    .vineta--oscura .lema span { color: var(--amarillo); }
+    .descripcion {
+      margin-top: 18px;
+      max-width: 34em;
+      font-size: clamp(1rem, 1.2vw, 1.13rem);
+      line-height: 1.65;
+      color: var(--tinta-suave);
+    }
+    .vineta--oscura .descripcion { color: #C9D3EA; }
+    .descripcion strong { color: var(--tinta); font-weight: 600; }
+    .vineta--oscura .descripcion strong { color: #fff; }
+
+    .puntos {
+      list-style: none;
+      display: grid;
+      gap: 10px;
+      margin-top: 22px;
+    }
+    .puntos li {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      font-weight: 500;
+      line-height: 1.4;
+      padding: 10px 16px 10px 10px;
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid rgba(20, 24, 43, .08);
+      box-shadow: 0 6px 16px -10px rgba(20, 24, 43, .35);
+      transition: transform .2s ease;
+    }
+    .puntos li:hover { transform: translateX(4px); }
+    .vineta--oscura .puntos li {
+      background: rgba(255, 255, 255, .06);
+      border-color: rgba(255, 255, 255, .10);
+      box-shadow: none;
+    }
+
+    /* Ícono con los sprites reales del juego: marco dorado como las cartas de la tienda,
+       y los objetos van rotando con un "pop". */
+    .icono-juego {
+      flex: none;
+      position: relative;
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 40%, #2A3F8A 0%, #121A3D 55%, #0B0F1C 100%);
+      border: 3px solid #F5C518;
+      box-shadow: inset 0 0 0 2px #7A5A00, 0 0 0 2px var(--bisel), 0 4px 0 2px var(--bisel),
+                  0 0 18px -4px rgba(255, 210, 31, .55);
+    }
+    .icono-juego img {
+      position: absolute;
+      inset: 3px;
+      width: calc(100% - 6px);
+      height: calc(100% - 6px);
+      object-fit: contain;
+      filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .5));
+      opacity: 0;
+      transform: scale(.55) rotate(-12deg);
+      transition: opacity .25s ease, transform .45s cubic-bezier(.34, 1.7, .5, 1);
+    }
+    .icono-juego img.activo { opacity: 1; transform: none; }
+    /* Retratos que ya traen su propio marco: ocupan todo el cuadro */
+    .icono-juego--marco img { inset: 0; width: 100%; height: 100%; filter: none; }
+    .icono-juego img.saliendo { opacity: 0; transform: scale(1.25) rotate(10deg); transition-duration: .25s; }
+    /* Brillo que cruza el marco */
+    .icono-juego::after {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, .45) 50%, transparent 60%);
+      transform: translateX(-120%);
+      animation: brillo-icono 3.4s ease-in-out infinite;
+      pointer-events: none;
+    }
+    .puntos li:nth-child(2) .icono-juego::after { animation-delay: .6s; }
+    .puntos li:nth-child(3) .icono-juego::after { animation-delay: 1.2s; }
+    @keyframes brillo-icono { 0%, 60% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
+    .puntos li:hover .icono-juego { animation: menear .5s ease; }
+    @keyframes menear { 25% { transform: rotate(-8deg) scale(1.08); } 60% { transform: rotate(6deg) scale(1.08); } }
+
+    /* Chispas mágicas para "crea tu huevo" */
+    .chispa {
+      position: absolute;
+      z-index: 1;
+      width: 12px;
+      height: 12px;
+      background: #FFE36B;
+      clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+      filter: drop-shadow(0 0 3px #FFD21F);
+      animation: titilar 1.6s ease-in-out infinite;
+    }
+    .chispa:nth-of-type(1) { top: 5px; left: 6px; }
+    .chispa:nth-of-type(2) { top: 9px; right: 5px; width: 9px; height: 9px; animation-delay: .5s; background: #9FF0FF; filter: drop-shadow(0 0 3px var(--cian)); }
+    .chispa:nth-of-type(3) { bottom: 6px; right: 9px; width: 8px; height: 8px; animation-delay: 1s; }
+    @keyframes titilar { 0%, 100% { opacity: 0; transform: scale(.2) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(90deg); } }
+
+    /* Ruleta diaria: gira rápido, frena y se queda un momento; los focos parpadean */
+    .icono-juego--ruleta { background: radial-gradient(circle at 50% 55%, #24387F 0%, #0B0F1C 75%); }
+    .icono-juego--ruleta svg { position: absolute; inset: 3px; width: calc(100% - 6px); height: calc(100% - 6px); }
+    .ruleta-giro {
+      transform-box: view-box;
+      transform-origin: 50px 54px;
+      animation: girar-ruleta 4.2s infinite;
+    }
+    @keyframes girar-ruleta {
+      0% { transform: rotate(0); animation-timing-function: cubic-bezier(.15, .6, .2, 1); }
+      65%, 100% { transform: rotate(1440deg); }
+    }
+    .ruleta-focos circle { fill: #FFF5CC; animation: foco .5s steps(1) infinite; }
+    .ruleta-focos circle:nth-child(even) { animation-delay: .25s; }
+    @keyframes foco { 50% { fill: #F5A417; } }
+    .ruleta-centro { transform-box: fill-box; transform-origin: center; animation: premio 4.2s infinite; }
+    @keyframes premio { 0%, 64%, 100% { transform: none; } 72% { transform: scale(1.35); } 80% { transform: scale(1); } }
+
+    /* Ardides: cada carta tiembla con un destello y un rayo */
+    .icono-juego--rayo img.activo { animation: temblor 3s infinite; }
+    @keyframes temblor {
+      0%, 70%, 100% { transform: none; }
+      73% { transform: scale(1.1) translate(-2px, 1px) rotate(-3deg); }
+      76% { transform: scale(1.1) translate(2px, -1px) rotate(3deg); }
+      79% { transform: scale(1.05) translate(-1px, 0); }
+    }
+    .destello {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: radial-gradient(circle, rgba(255, 246, 194, .95) 0%, rgba(255, 210, 31, .4) 45%, transparent 75%);
+      opacity: 0;
+      animation: destello 3s infinite;
+      pointer-events: none;
+    }
+    @keyframes destello { 0%, 70%, 100% { opacity: 0; } 72% { opacity: 1; } 80% { opacity: 0; } }
+    .rayo {
+      position: absolute;
+      z-index: 2;
+      top: 2px;
+      right: 2px;
+      width: 20px;
+      height: 20px;
+      fill: #FFD21F;
+      stroke: #14182B;
+      stroke-width: 1.8;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 4px #FFD21F);
+      animation: rayo 3s infinite;
+    }
+    @keyframes rayo { 0%, 68%, 100% { opacity: 0; transform: scale(.4) rotate(-20deg); } 72%, 84% { opacity: 1; transform: scale(1.15) rotate(0); } }
+
+    .tiendas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+    .tienda { display: inline-block; border-radius: 12px; transition: transform .18s ease; }
+    .tienda:hover { transform: translateY(-2px); }
+    .tienda:focus-visible { outline: 3px solid var(--azul); outline-offset: 3px; }
+    .final .tienda:focus-visible { outline-color: var(--amarillo); }
+    .tienda img { height: 76px; width: auto; margin: -9px 0; }
+    .requisito { margin-top: 14px; font-size: .875rem; color: var(--tinta-suave); }
+
+    /* ---------- Llamado final ---------- */
+    .final {
+      position: relative;
+      text-align: center;
+      color: #fff;
+      padding: clamp(72px, 9vw, 140px) 16px;
+      background: var(--azul-noche) url("assets/web/fondo-1600.webp") center / cover no-repeat;
+      isolation: isolate;
+      overflow: hidden;
+    }
+    .final::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(180deg, rgba(7, 23, 57, .82), rgba(7, 23, 57, .7) 50%, rgba(7, 23, 57, .9));
+    }
+    .final__logo { width: clamp(200px, 30vw, 420px); height: auto; margin: 0 auto; filter: drop-shadow(0 8px 20px rgba(0, 0, 0, .5)); }
+    .final .lema { margin-top: 22px; color: var(--amarillo); text-shadow: 0 3px 0 #B33A00, 0 8px 24px rgba(0, 0, 0, .5); }
+    .final .descripcion { color: #DCE4F5; margin: 14px auto 0; }
+    .final .tiendas { justify-content: center; }
+    .final .requisito { color: #C9D3EA; }
+
+    /* ---------- Pie ---------- */
+    .pie {
+      background: var(--azul-noche);
+      color: #C9D3EA;
+      padding: 26px 16px calc(26px + env(safe-area-inset-bottom));
+      text-align: center;
+      font-size: .875rem;
+      border-top: 1px solid rgba(255, 255, 255, .08);
+    }
+    .pie nav { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; }
+    .pie a { color: #C9D3EA; text-decoration: none; padding: 4px 0; }
+    .pie a:hover { color: var(--amarillo); text-decoration: underline; }
+    .pie a:focus-visible { outline: 2px solid var(--amarillo); outline-offset: 3px; border-radius: 2px; }
+    .pie p { margin-top: 10px; opacity: .7; font-size: .8rem; }
+
+    /* ---------- Aparecer al bajar ---------- */
+    .js .revelar { opacity: 0; transform: translateY(28px); transition: opacity .8s ease, transform .8s cubic-bezier(.2, .8, .2, 1); }
+    .js .revelar.visible { opacity: 1; transform: none; }
+    .js .celular-zona.revelar { transform: translateX(-40px); }
+    .js .vineta--invertida .celular-zona.revelar { transform: translateX(40px); }
+    .js .celular-zona.revelar.visible { transform: none; }
+
+    /* ---------- Tablet y celular: una columna ---------- */
+    @media (max-width: 900px) {
+      .vineta__interior,
+      .vineta--invertida .vineta__interior {
+        grid-template-columns: 1fr;
+        padding: 56px 16px 64px;
+        gap: 36px;
+      }
+      .vineta--invertida .celular-zona { order: 0; }
+      /* Igual que en PC: el celular queda pegado al borde y se sale de la pantalla,
+         no se muestra entero */
+      .celular-zona { width: min(calc(100% + 16px), 820px); margin-left: -16px; justify-self: start; }
+      .vineta--invertida .celular-zona { margin-left: 0; margin-right: -16px; justify-self: end; }
+      .celular { --sangrado: 12vw; }
+      .celular-zona:has(.rey) { margin-top: 22px; }
+      .texto { text-align: center; max-width: 620px; margin: 0 auto; }
+      .descripcion { margin-left: auto; margin-right: auto; }
+      .tiendas { justify-content: center; }
+      .pestanas, .vineta--invertida .pestanas { justify-content: center; padding-left: 0; }
+      .puntos { display: inline-grid; text-align: left; max-width: 30em; }
+    }
+    @media (max-width: 800px) {
+      .final { background-image: url("assets/web/fondo-800.webp"); }
+    }
+    @media (max-width: 480px) {
+      .vineta__interior, .vineta--invertida .vineta__interior { padding-top: 44px; }
+      .rey { width: 52px; right: 10%; }
+      .celular-zona:has(.rey) { margin-top: 26px; }
+      .tienda img { height: 68px; }
+      .pestana { padding: 8px 11px; font-size: .74rem; }
+    }
+    @media (max-height: 500px) and (orientation: landscape) {
+      .banner { height: 70vh; }
+    }
+
+    @keyframes aparecer { from { opacity: 0; transform: translateY(16px); } }
+    @keyframes aparecer-logo { from { transform: translateY(16px) scale(.96); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .js .revelar { opacity: 1; transform: none; }
+    }
+  </style>
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+  <header class="banner">
+    <img class="banner__fondo" src="assets/web/fondo-1200.webp" srcset="assets/web/fondo-800.webp 800w, assets/web/fondo-1200.webp 1200w, assets/web/fondo-1600.webp 1600w" sizes="(max-width: 619px) 440px, 100vw" fetchpriority="high" alt="" width="1880" height="837">
+    <img class="banner__logo" src="assets/web/logo-960.webp" srcset="assets/web/logo-480.webp 480w, assets/web/logo-640.webp 640w, assets/web/logo-960.webp 960w" sizes="(max-width: 545px) 240px, 44vw" fetchpriority="high" alt="Eggodia" width="1866" height="843">
+    <h1>Eggodia</h1>
+  </header>
+
+  <main>
+    <!-- 1. Batalla -->
+    <section class="vineta vineta--clara" aria-labelledby="lema-batalla">
+      <div class="vineta__interior">
+        <div class="celular-zona revelar">
+          <img class="rey" src="assets/web/rey-huevo.webp" srcset="assets/web/rey-huevo.webp 120w, assets/web/rey-huevo-240.webp 240w" sizes="(max-width: 480px) 52px, clamp(58px, 7vw, 110px)" decoding="async" alt="" aria-hidden="true" width="361" height="661">
+          <div class="celular">
+            <span class="celular__camara" aria-hidden="true"></span>
+            <div class="celular__pantalla">
+              <video muted loop playsinline preload="none" poster="assets/web/partida-eggodia-640.webp"
+                     aria-label="Partida de Eggodia: tropas sobre el tablero de ajedrez y cartas en la mano">
+                <source data-src="videos/partida-eggodia.mp4" type="video/mp4">
+              </video>
+              <span class="celular__brillo" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+        <div class="texto revelar">
+          <h2 class="lema" id="lema-batalla">¡Defiende tu huevo y <span>rompe el del rival!</span></h2>
+          <p class="descripcion">
+            Arma tu mazo con peones de ajedrez, caballeros, dragones, tiburones y soldados de caricatura.
+            Suma ardides como Veneno, Terremoto o la Nuclear y lánzate a la batalla por turnos en tres carriles.
+            Juega contra el bot, en línea o reta a tus amigos. Todo se gana jugando:
+            <strong>¡descárgalo gratis!</strong>
+          </p>
+          <div class="tiendas">
+            <a class="tienda" href="https://play.google.com/store/apps/details?id=com.eggodia.game"
+               target="_blank" rel="noopener" aria-label="Descargar Eggodia en Google Play">
+              <img src="assets/web/google-play.webp" srcset="assets/web/google-play.webp 300w, assets/web/google-play-600.webp 600w" sizes="(max-width: 480px) 176px, 196px" alt="Disponible en Google Play" width="646" height="250">
+            </a>
+          </div>
+          <p class="requisito">Para Android 7 o superior.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Selector de huevos y tronos -->
+    <section class="vineta vineta--oscura vineta--invertida" aria-labelledby="lema-huevos">
+      <div class="vineta__interior">
+        <div class="celular-zona revelar">
+          <div class="celular">
+            <span class="celular__camara" aria-hidden="true"></span>
+            <div class="celular__pantalla">
+              <video muted loop playsinline preload="none" data-diferida data-poster="img/selector-huevos-640.webp"
+                     aria-label="Selector de huevos y tronos: Rey Huevo, Dino Huevo, Paper Dino Huevo, Coronel Huevo y tronos">
+                <source data-src="videos/selector-huevos.mp4" type="video/mp4">
+              </video>
+              <span class="celular__brillo" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+        <div class="texto revelar">
+          <span class="etiqueta">Personaliza</span>
+          <h2 class="lema" id="lema-huevos">Viste a tu huevo <span>como un rey</span></h2>
+          <p class="descripcion">
+            Tu huevo es tu campeón. Ponle corona, casco o traje de dinosaurio y siéntalo en el trono que más
+            te guste. <strong>Tu rival lo ve en cada partida en línea.</strong>
+          </p>
+          <ul class="puntos">
+            <li>
+              <span class="icono-juego" aria-hidden="true">
+                <img class="activo" data-diferida data-src="img/iconos/chico/huevo-rey.webp" data-srcset="img/iconos/chico/huevo-rey.webp 104w, img/iconos/huevo-rey.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/huevo-dino.webp" data-srcset="img/iconos/chico/huevo-dino.webp 104w, img/iconos/huevo-dino.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/huevo-coronel.webp" data-srcset="img/iconos/chico/huevo-coronel.webp 104w, img/iconos/huevo-coronel.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/huevo-paper.webp" data-srcset="img/iconos/chico/huevo-paper.webp 104w, img/iconos/huevo-paper.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/huevo-capitan.webp" data-srcset="img/iconos/chico/huevo-capitan.webp 104w, img/iconos/huevo-capitan.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/huevo-dorado.webp" data-srcset="img/iconos/chico/huevo-dorado.webp 104w, img/iconos/huevo-dorado.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+              </span>
+              Rey Huevo, Dino Huevo, Coronel Huevo, Paper Dino Huevo y más.
+            </li>
+            <li>
+              <span class="icono-juego" aria-hidden="true">
+                <img class="activo" data-diferida data-src="img/iconos/chico/trono-piedra.webp" data-srcset="img/iconos/chico/trono-piedra.webp 104w, img/iconos/trono-piedra.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/trono-papel.webp" data-srcset="img/iconos/chico/trono-papel.webp 104w, img/iconos/trono-papel.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/trono-ajedrez.webp" data-srcset="img/iconos/chico/trono-ajedrez.webp 104w, img/iconos/trono-ajedrez.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/trono-bomba.webp" data-srcset="img/iconos/chico/trono-bomba.webp 104w, img/iconos/trono-bomba.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/trono-cofre.webp" data-srcset="img/iconos/chico/trono-cofre.webp 104w, img/iconos/trono-cofre.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/trono-dado.webp" data-srcset="img/iconos/chico/trono-dado.webp 104w, img/iconos/trono-dado.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/trono-rocoso.webp" data-srcset="img/iconos/chico/trono-rocoso.webp 104w, img/iconos/trono-rocoso.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/trono-real.webp" data-srcset="img/iconos/chico/trono-real.webp 104w, img/iconos/trono-real.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+              </span>
+              Tronos de piedra, de papel, de ajedrez, bomba, cofre o dado.
+            </li>
+            <li>
+              <span class="icono-juego icono-juego--magia" aria-hidden="true">
+                <img class="activo" data-diferida data-src="img/iconos/chico/huevo-majestad.webp" data-srcset="img/iconos/chico/huevo-majestad.webp 104w, img/iconos/huevo-majestad.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/huevo-elegido.webp" data-srcset="img/iconos/chico/huevo-elegido.webp 104w, img/iconos/huevo-elegido.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/huevo-rosa.webp" data-srcset="img/iconos/chico/huevo-rosa.webp 104w, img/iconos/huevo-rosa.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/huevo-anti.webp" data-srcset="img/iconos/chico/huevo-anti.webp 104w, img/iconos/huevo-anti.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <i class="chispa"></i><i class="chispa"></i><i class="chispa"></i>
+              </span>
+              Crea tu propio huevo con estilos y accesorios.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Tienda -->
+    <section class="vineta vineta--clara" aria-labelledby="lema-tienda">
+      <div class="vineta__interior">
+        <div class="celular-zona revelar">
+          <div class="celular">
+            <span class="celular__camara" aria-hidden="true"></span>
+            <div class="celular__pantalla" id="tienda-pantalla" role="region" aria-roledescription="carrusel" aria-label="Capturas de la tienda">
+              <div class="diapositiva activa" id="diapo-tronos" role="tabpanel" aria-label="Tronos">
+                <img data-diferida data-src="img/tienda-tronos-1280.webp" data-srcset="img/tienda-tronos-640.webp 640w, img/tienda-tronos-960.webp 960w, img/tienda-tronos-1280.webp 1280w" sizes="(max-width: 900px) 88vw, 55vw" decoding="async" alt="Tienda de Eggodia: tronos reales con su precio en monedas" width="1280" height="576">
+              </div>
+              <div class="diapositiva" id="diapo-tropas" role="tabpanel" aria-label="Tropas">
+                <img data-src="img/tienda-tropas-1280.webp" data-srcset="img/tienda-tropas-640.webp 640w, img/tienda-tropas-960.webp 960w, img/tienda-tropas-1280.webp 1280w" sizes="(max-width: 900px) 88vw, 55vw" decoding="async" alt="Tienda de Eggodia: tropas de batalla como Tiburón Blanco, Calamar Gigante y Tanque" width="1280" height="576">
+              </div>
+              <div class="diapositiva" id="diapo-lotes" role="tabpanel" aria-label="Lotes">
+                <img data-src="img/tienda-lotes-1280.webp" data-srcset="img/tienda-lotes-640.webp 640w, img/tienda-lotes-960.webp 960w, img/tienda-lotes-1280.webp 1280w" sizes="(max-width: 900px) 88vw, 55vw" decoding="async" alt="Tienda de Eggodia: lotes 2 en 1 con huevo y trono" width="1280" height="576">
+              </div>
+              <div class="diapositiva" id="diapo-skins" role="tabpanel" aria-label="Skins">
+                <img data-src="img/tienda-skins-1280.webp" data-srcset="img/tienda-skins-640.webp 640w, img/tienda-skins-960.webp 960w, img/tienda-skins-1280.webp 1280w" sizes="(max-width: 900px) 88vw, 55vw" decoding="async" alt="Tienda de Eggodia: skins de huevo" width="1280" height="576">
+              </div>
+              <span class="celular__brillo" aria-hidden="true"></span>
+            </div>
+          </div>
+          <div class="pestanas" role="tablist" aria-label="Secciones de la tienda">
+            <button class="pestana" role="tab" aria-selected="true" aria-controls="diapo-tronos">Tronos</button>
+            <button class="pestana" role="tab" aria-selected="false" aria-controls="diapo-tropas">Tropas</button>
+            <button class="pestana" role="tab" aria-selected="false" aria-controls="diapo-lotes">Lotes</button>
+            <button class="pestana" role="tab" aria-selected="false" aria-controls="diapo-skins">Skins</button>
+          </div>
+        </div>
+        <div class="texto revelar">
+          <span class="etiqueta">La tienda</span>
+          <h2 class="lema" id="lema-tienda">Gana monedas y <span>llena tu reino</span></h2>
+          <p class="descripcion">
+            Cada partida te da monedas. Gástalas en la tienda en tronos, skins de huevo, lotes 2 en 1,
+            hechizos y tropas nuevas como el Tiburón Blanco o el Calamar Gigante.
+            <strong>Todo se consigue jugando: no hay compras con dinero.</strong>
+          </p>
+          <ul class="puntos">
+            <li>
+              <span class="icono-juego icono-juego--ruleta" aria-hidden="true">
+                <svg viewBox="0 0 100 100">
+                  <circle cx="50" cy="56" r="40" fill="#000" opacity=".35"/>
+                  <g class="ruleta-giro">
+                  <circle cx="50" cy="54" r="40" fill="#D4A638"/>
+                  <path d="M50 54L36.22 20.74A36 36 0 0 1 63.78 20.74Z" fill="#29468C"/>
+                  <path d="M50 54L63.78 20.74A36 36 0 0 1 83.26 40.22Z" fill="#1A739E"/>
+                  <path d="M50 54L83.26 40.22A36 36 0 0 1 83.26 67.78Z" fill="#248C6B"/>
+                  <path d="M50 54L83.26 67.78A36 36 0 0 1 63.78 87.26Z" fill="#6B9E33"/>
+                  <path d="M50 54L63.78 87.26A36 36 0 0 1 36.22 87.26Z" fill="#9E61C7"/>
+                  <path d="M50 54L36.22 87.26A36 36 0 0 1 16.74 67.78Z" fill="#D96B2E"/>
+                  <path d="M50 54L16.74 67.78A36 36 0 0 1 16.74 40.22Z" fill="#D1333D"/>
+                  <path d="M50 54L16.74 40.22A36 36 0 0 1 36.22 20.74Z" fill="#F2BD33"/>
+                  <path d="M50 54L36.22 20.74M50 54L63.78 20.74M50 54L83.26 40.22M50 54L83.26 67.78M50 54L63.78 87.26M50 54L36.22 87.26M50 54L16.74 67.78M50 54L16.74 40.22" stroke="#73520F" stroke-width="1.4"/>
+                  <circle cx="50" cy="54" r="36" fill="none" stroke="#73520F" stroke-width="1.6"/>
+                  <g class="ruleta-focos"><circle cx="50" cy="16" r="1.4"/><circle cx="64.54" cy="18.89" r="1.4"/><circle cx="76.87" cy="27.13" r="1.4"/><circle cx="85.11" cy="39.46" r="1.4"/><circle cx="88" cy="54" r="1.4"/><circle cx="85.11" cy="68.54" r="1.4"/><circle cx="76.87" cy="80.87" r="1.4"/><circle cx="64.54" cy="89.11" r="1.4"/><circle cx="50" cy="92" r="1.4"/><circle cx="35.46" cy="89.11" r="1.4"/><circle cx="23.13" cy="80.87" r="1.4"/><circle cx="14.89" cy="68.54" r="1.4"/><circle cx="12" cy="54" r="1.4"/><circle cx="14.89" cy="39.46" r="1.4"/><circle cx="23.13" cy="27.13" r="1.4"/><circle cx="35.46" cy="18.89" r="1.4"/></g>
+                  </g>
+                  <g class="ruleta-centro">
+                    <circle cx="50" cy="54" r="11.2" fill="#73520F"/>
+                    <circle cx="50" cy="54" r="9.6" fill="#FFD14D"/>
+                    <image data-diferida data-href="img/iconos/moneda.webp" x="42" y="46" width="16" height="16"/>
+                  </g>
+                  <path d="M38.5 0.5h23L50 20z" fill="#402608"/>
+                  <path d="M41.5 2.5h17L50 15.5z" fill="#FFD14D"/>
+                  <circle cx="50" cy="6" r="2.2" fill="#FFF5CC"/>
+                </svg>
+              </span>
+              Gira la ruleta diaria para ganar premios extra.
+            </li>
+            <li>
+              <span class="icono-juego" aria-hidden="true">
+                <img class="activo" data-diferida data-src="img/iconos/chico/tropa-tiburon.webp" data-srcset="img/iconos/chico/tropa-tiburon.webp 104w, img/iconos/tropa-tiburon.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/tropa-kabar.webp" data-srcset="img/iconos/chico/tropa-kabar.webp 104w, img/iconos/tropa-kabar.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/tropa-calamar.webp" data-srcset="img/iconos/chico/tropa-calamar.webp 104w, img/iconos/tropa-calamar.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/tropa-tanque.webp" data-srcset="img/iconos/chico/tropa-tanque.webp 104w, img/iconos/tropa-tanque.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/tropa-campero.webp" data-srcset="img/iconos/chico/tropa-campero.webp 104w, img/iconos/tropa-campero.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/tropa-granadero.webp" data-srcset="img/iconos/chico/tropa-granadero.webp 104w, img/iconos/tropa-granadero.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+              </span>
+              Desbloquea tropas para hacer tu mazo más fuerte.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Mazo -->
+    <section class="vineta vineta--oscura vineta--invertida" aria-labelledby="lema-mazo">
+      <div class="vineta__interior">
+        <div class="celular-zona revelar">
+          <div class="celular">
+            <span class="celular__camara" aria-hidden="true"></span>
+            <div class="celular__pantalla">
+              <img data-diferida data-src="img/mazo-cartas-1280.webp" data-srcset="img/mazo-cartas-640.webp 640w, img/mazo-cartas-960.webp 960w, img/mazo-cartas-1280.webp 1280w" sizes="(max-width: 900px) 88vw, 55vw" decoding="async" alt="Constructor de mazo: colección de tropas y la ficha del Soldado Real con vida, ataque, defensa y habilidad" width="1280" height="576">
+              <span class="celular__brillo" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+        <div class="texto revelar">
+          <span class="etiqueta">Tu mazo</span>
+          <h2 class="lema" id="lema-mazo">Elige tus 8 cartas <span>y sal a ganar</span></h2>
+          <p class="descripcion">
+            Revisa la vida, el ataque, la defensa y la habilidad de cada tropa: el Soldado Real contraataca,
+            el Dragón de Flama lanza bolas de fuego y la Dama golpea en cualquier carril. <strong>Combina épocas y encuentra tu estrategia.</strong>
+          </p>
+          <ul class="puntos">
+            <li>
+              <span class="icono-juego icono-juego--marco" aria-hidden="true">
+                <img class="activo" data-diferida data-src="img/iconos/chico/carta-dama.webp" data-srcset="img/iconos/chico/carta-dama.webp 104w, img/iconos/carta-dama.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/carta-soldado-real.webp" data-srcset="img/iconos/chico/carta-soldado-real.webp 104w, img/iconos/carta-soldado-real.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/carta-soldado-cartoon.webp" data-srcset="img/iconos/chico/carta-soldado-cartoon.webp 104w, img/iconos/carta-soldado-cartoon.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/carta-paperex.webp" data-srcset="img/iconos/chico/carta-paperex.webp 104w, img/iconos/carta-paperex.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/carta-tiburon.webp" data-srcset="img/iconos/chico/carta-tiburon.webp 104w, img/iconos/carta-tiburon.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/carta-dragon.webp" data-srcset="img/iconos/chico/carta-dragon.webp 104w, img/iconos/carta-dragon.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+              </span>
+              Ajedrez, medieval, guerra de caricatura, papel y criaturas del mar.
+            </li>
+            <li>
+              <span class="icono-juego icono-juego--rayo" aria-hidden="true">
+                <img class="activo" data-diferida data-src="img/iconos/chico/ardid-fuerza.webp" data-srcset="img/iconos/chico/ardid-fuerza.webp 104w, img/iconos/ardid-fuerza.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/ardid-veneno.webp" data-srcset="img/iconos/chico/ardid-veneno.webp 104w, img/iconos/ardid-veneno.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/ardid-terremoto.webp" data-srcset="img/iconos/chico/ardid-terremoto.webp 104w, img/iconos/ardid-terremoto.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <img data-diferida data-src="img/iconos/chico/ardid-nuclear.webp" data-srcset="img/iconos/chico/ardid-nuclear.webp 104w, img/iconos/ardid-nuclear.webp 160w" sizes="52px" alt="" width="160" height="160" decoding="async">
+                <i class="destello"></i>
+                <svg class="rayo" viewBox="0 0 24 24"><path d="M13.5 2 4.5 13.5h6.5L10 22l9-11.5h-6.5z"/></svg>
+              </span>
+              Ardides para dar vuelta la partida: Fuerza, Veneno, Terremoto, Nuclear.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Llamado final -->
+    <section class="final" aria-labelledby="lema-final">
+      <img class="final__logo revelar" src="assets/web/logo-960.webp" srcset="assets/web/logo-480.webp 480w, assets/web/logo-640.webp 640w, assets/web/logo-960.webp 960w" sizes="clamp(200px, 30vw, 420px)" alt="" aria-hidden="true" width="1866" height="843" loading="lazy">
+      <div class="revelar">
+        <h2 class="lema" id="lema-final">¿Listo para romper el cascarón?</h2>
+        <p class="descripcion">Descarga Eggodia gratis y arma tu primer mazo hoy.</p>
+        <div class="tiendas">
+          <a class="tienda" href="https://play.google.com/store/apps/details?id=com.eggodia.game"
+             target="_blank" rel="noopener" aria-label="Descargar Eggodia en Google Play">
+            <img src="assets/web/google-play.webp" srcset="assets/web/google-play.webp 300w, assets/web/google-play-600.webp 600w" sizes="(max-width: 480px) 176px, 196px" alt="Disponible en Google Play" width="646" height="250" loading="lazy">
+          </a>
+        </div>
+        <p class="requisito">Para Android 7 o superior.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <nav aria-label="Enlaces legales">
+      <a href="https://api.eggodia.com/privacidad" target="_blank" rel="noopener">Privacidad</a>
+      <a href="https://api.eggodia.com/terminos" target="_blank" rel="noopener">Términos</a>
+    </nav>
+    <p>© 2026 Eggodia. Google Play y el logotipo de Google Play son marcas de Google LLC.</p>
+  </footer>
+
+  <script>
+    const quieto = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    // Videos: con "reducir movimiento" quedan quietos en su imagen.
+    // Videos: se descargan recién cuando están por entrar en pantalla (y después de la primera interacción),
+    // así no compiten con lo primero que se ve. Con "reducir movimiento" quedan quietos en su imagen.
+    const videos = [...document.querySelectorAll("video")];
+    const cargarVideo = v => {
+      if (v.dataset.cargado) return;
+      v.dataset.cargado = "1";
+      v.querySelectorAll("source[data-src]").forEach(s => { s.src = s.dataset.src; });
+      v.load();
+    };
+    const reproducir = v => {
+      if (quieto.matches) { v.pause(); return; }
+      cargarVideo(v);
+      v.play().catch(() => {});
+    };
+    const enPantalla = new Set();
+    const aplicarMovimiento = () => videos.forEach(v => enPantalla.has(v) ? reproducir(v) : v.pause());
+    const vigilarVideos = () => {
+      if (!("IntersectionObserver" in window)) { videos.forEach(v => enPantalla.add(v)); aplicarMovimiento(); return; }
+      const obsVideo = new IntersectionObserver(entradas => entradas.forEach(e => {
+        if (e.isIntersecting) { enPantalla.add(e.target); reproducir(e.target); }
+        else { enPantalla.delete(e.target); e.target.pause(); }
+      }), { rootMargin: "200px 0px" });
+      videos.forEach(v => obsVideo.observe(v));
+    };
+    // Los videos arrancan con la primera acción clara de la persona: rueda del mouse, tocar/deslizar,
+    // clic o teclado. Pasar el mouse por encima o un scroll automático NO cuentan, para que un video
+    // no arranque solo mientras se mide la página. Hasta entonces se ve su póster.
+    const gestos = ["wheel", "touchstart", "touchmove", "pointerdown", "keydown"];
+    const despertar = e => {
+      if (e && e.isTrusted === false) return;
+      gestos.forEach(g => window.removeEventListener(g, despertar));
+      if (document.readyState === "complete") vigilarVideos();
+      else window.addEventListener("load", vigilarVideos, { once: true });
+    };
+    gestos.forEach(g => window.addEventListener(g, despertar, { passive: true }));
+    quieto.addEventListener("change", aplicarMovimiento);
+
+    // Imágenes de más abajo: se piden recién cuando están por entrar en pantalla (300 px antes).
+    // El lazy-load nativo empieza mucho antes y compite con lo primero que se ve.
+    const cargarDiferida = el => {
+      const d = el.dataset;
+      if (d.srcset) el.srcset = d.srcset;
+      if (d.src) el.src = d.src;
+      if (d.poster) el.poster = d.poster;
+      if (d.href) el.setAttribute("href", d.href);
+      el.removeAttribute("data-diferida");
+    };
+    const diferidas = document.querySelectorAll("[data-diferida]");
+    if ("IntersectionObserver" in window) {
+      // Se observa el contenedor visible (el cuadro del ícono, la ruleta o el celular) y se cargan todas sus imágenes.
+      const grupos = new Map();
+      diferidas.forEach(el => {
+        const caja = el.closest(".icono-juego, svg, .celular") || el;
+        if (!grupos.has(caja)) grupos.set(caja, []);
+        grupos.get(caja).push(el);
+      });
+      const obsDif = new IntersectionObserver(entradas => entradas.forEach(e => {
+        if (!e.isIntersecting) return;
+        grupos.get(e.target).forEach(cargarDiferida);
+        obsDif.unobserve(e.target);
+      }), { rootMargin: "300px 0px" });
+      grupos.forEach((_, caja) => obsDif.observe(caja));
+    } else {
+      diferidas.forEach(cargarDiferida);
+    }
+
+    // Aparecer al bajar.
+    const revelar = document.querySelectorAll(".revelar");
+    if ("IntersectionObserver" in window) {
+      const obs = new IntersectionObserver(entradas => entradas.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add("visible"); obs.unobserve(e.target); }
+      }), { threshold: 0.15 });
+      revelar.forEach(el => obs.observe(el));
+    } else {
+      revelar.forEach(el => el.classList.add("visible"));
+    }
+
+    // Tienda: cambia de sección sola cada 3,5 s; las pestañas la eligen a mano.
+    const pestanas = [...document.querySelectorAll(".pestana")];
+    const diapos = pestanas.map(p => document.getElementById(p.getAttribute("aria-controls")));
+    let actual = 0, temporizador = null;
+    const cargarDiapo = d => d.querySelectorAll("img[data-src]").forEach(img => {
+      img.srcset = img.dataset.srcset; img.src = img.dataset.src;
+      img.removeAttribute("data-src"); img.removeAttribute("data-srcset");
+    });
+    const mostrar = i => {
+      actual = (i + diapos.length) % diapos.length;
+      cargarDiapo(diapos[actual]);
+      setTimeout(() => cargarDiapo(diapos[(actual + 1) % diapos.length]), 1500);
+      diapos.forEach((d, j) => d.classList.toggle("activa", j === actual));
+      pestanas.forEach((p, j) => p.setAttribute("aria-selected", j === actual ? "true" : "false"));
+    };
+    // El carrusel solo gira (y pide imágenes) mientras la tienda está a la vista.
+    let tiendaVisible = false;
+    const arrancar = () => {
+      clearInterval(temporizador);
+      if (!quieto.matches && tiendaVisible) temporizador = setInterval(() => mostrar(actual + 1), 3500);
+    };
+    pestanas.forEach((p, i) => p.addEventListener("click", () => { mostrar(i); arrancar(); }));
+    const pantallaTienda = document.getElementById("tienda-pantalla");
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(([e]) => {
+        tiendaVisible = e.isIntersecting;
+        if (tiendaVisible) cargarDiapo(diapos[(actual + 1) % diapos.length]);
+        arrancar();
+      }, { rootMargin: "100px 0px" }).observe(pantallaTienda);
+    } else {
+      diapos.forEach(cargarDiapo); tiendaVisible = true; arrancar();
+    }
+
+    // Íconos del juego: rotan sus sprites (huevos, tronos, skins), cada uno a destiempo.
+    document.querySelectorAll(".icono-juego").forEach((icono, n) => {
+      const imgs = [...icono.querySelectorAll("img")];
+      if (imgs.length < 2) return;
+      let i = 0;
+      setTimeout(() => setInterval(() => {
+        if (quieto.matches || document.hidden) return;
+        const viejo = imgs[i];
+        i = (i + 1) % imgs.length;
+        viejo.classList.remove("activo");
+        viejo.classList.add("saliendo");
+        setTimeout(() => viejo.classList.remove("saliendo"), 260);
+        imgs[i].classList.add("activo");
+      }, 2000), (n % 3) * 650);
+    });
+  </script>
+</body>
+</html>

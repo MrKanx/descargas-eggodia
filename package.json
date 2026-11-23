@@ -1,0 +1,15 @@
+{
+  "name": "descargas-eggodia",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite build && vite preview --port 5173 --open",
+    "dev:editar": "vite --open",
+    "build": "vite build",
+    "preview": "vite preview --open"
+  },
+  "devDependencies": {
+    "vite": "8.3.8"
+  }
+}
